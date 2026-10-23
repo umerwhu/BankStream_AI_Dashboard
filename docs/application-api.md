@@ -7,9 +7,9 @@ All endpoints, including `/api/config`, require the configured identity middlewa
 | `GET /api/config` | Safe runtime mode, provider configured flag, and auth mode; never returns credentials. |
 | `GET /api/dashboard` | Single-request snapshot for UI refresh: config permissions, overview, recommendations, products, operations, and fraud dashboard. |
 | `GET /api/overview` | Business KPIs and source-derived chart series, including account, transaction, KYC, and payment status distributions. Currency values remain grouped. |
-| `GET /api/customers?q=&segment=&page=&pageSize=` | Customer directory. Page size is capped at 100. |
+| `GET /api/customers?q=&segment=&page=&pageSize=` | Customer directory. Page size defaults to 5 and is capped at 100. |
 | `GET /api/customers/:customerId/360` | Authorized customer relationship, source records, timeline, and recommendations. |
-| `GET /api/transactions?q=&stage=&status=&currency=&from=&to=&minAmount=&maxAmount=&page=&pageSize=` | Filtered/paged transactions. Page size is capped at 100. Amounts accept up to four decimal places. |
+| `GET /api/transactions?q=&stage=&status=&currency=&from=&to=&minAmount=&maxAmount=&page=&pageSize=` | Filtered/paged transactions. Page size defaults to 5 and is capped at 100. Amounts accept up to four decimal places. |
 | `GET /api/products` | Loans, repayments, cards, term deposits, and payments. |
 | `GET /api/operations` | Cases, interactions, KYC, offers/campaigns, consent, and preferences. |
 | `GET /api/recommendations` | Scoped proposed and in-flight actions, source evidence, and status history. |
