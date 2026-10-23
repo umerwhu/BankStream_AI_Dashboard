@@ -6,6 +6,8 @@ A web dashboard for banking data. It includes Overview, Customer 360, transactio
 
 ![BankStream AI Dashboard architecture](docs/images/BankStream_AI_System_Architecture.png)
 
+![Dashboard UI](docs/images/dashboard.jpg)
+
 TapData carries changes from the banking sources into the target configured for your deployment and exposes data through published APIs. BankStream reads data through its backend; the browser does not call TapData directly. `DATA_SOURCE` selects one source (`demo`, `tapdata`, `mongodb`, or `api`) at a time. It does not combine sources. AI keys stay on the backend. Fraud indicators are deterministic review signals, not confirmed fraud.
 
 ## Run it locally
