@@ -8,6 +8,20 @@ function timestampMs(value) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+// TapData serializes timezone-less AS400 TIMESTAMP values by treating their
+// source wall time as UTC, then emits that value with the source offset. Remove
+// the duplicated offset from the parsed instant so the source wall time is
+// interpreted in its original timezone. The offset is read from each value.
+function transactionTimestampMs(value) {
+  const parsed = timestampMs(value);
+  if (parsed === null) return null;
+  const match = /([+-])([0-9]{2}):?([0-9]{2})$/i.exec(value.trim());
+  if (!match) return parsed;
+  const direction = match[1] === '-' ? -1 : 1;
+  const offsetMinutes = direction * (Number(match[2]) * 60 + Number(match[3]));
+  return parsed - offsetMinutes * 60_000;
+}
+
 function uniqueTransactions(rows) {
   const byId = new Map();
   for (const row of rows) {
@@ -39,7 +53,7 @@ export function buildTransactionActivity(rows = [], now = Date.now()) {
     && x.TRANSACTION_TYPE !== 'REVERSAL'
     && !reversalLinked.has(String(x.TRANSACTION_ID)));
   const recentTransactions = unique.filter(x => {
-    const time = timestampMs(x.TRANSACTION_TIMESTAMP);
+    const time = transactionTimestampMs(x.TRANSACTION_TIMESTAMP);
     return time !== null && time >= startMs && time <= endMs;
   });
   const buckets = Array.from({ length: BUCKET_COUNT }, (_, index) => {
@@ -49,7 +63,7 @@ export function buildTransactionActivity(rows = [], now = Date.now()) {
   });
   const statusTotals = new Map();
   for (const row of recentTransactions) {
-    const time = timestampMs(row.TRANSACTION_TIMESTAMP);
+    const time = transactionTimestampMs(row.TRANSACTION_TIMESTAMP);
     const index = Math.min(BUCKET_COUNT - 1, Math.floor((time - startMs) / BUCKET_MS));
     const status = String(row.TRANSACTION_STATUS || 'UNKNOWN').trim().toUpperCase() || 'UNKNOWN';
     buckets[index].counts[status] = (buckets[index].counts[status] || 0) + 1;

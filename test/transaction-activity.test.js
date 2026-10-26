@@ -41,6 +41,17 @@ test('counts all stages and statuses in KPI and chart while preserving separate 
   assert.equal(Object.values(chartStatusTotals).reduce((sum, count) => sum + count, 0), result.recentCount24h);
 });
 
+test('interprets TapData-shifted source timestamps using the returned timezone offset', () => {
+  const now = Date.UTC(2026, 0, 2, 4);
+  const row = {
+    ...tx('as400-local-time', 0),
+    TRANSACTION_TIMESTAMP: '2026-01-02T19:00:00+08:00',
+  };
+  const result = buildTransactionActivity([row], now);
+  assert.equal(result.recentCount24h, 1);
+  assert.equal(result.series.reduce((sum, x) => sum + Object.values(x.counts).reduce((n, value) => n + value, 0), 0), 1);
+});
+
 test('deduplicates repeated transaction IDs and rejects timezone-ambiguous or invalid timestamps', () => {
   const now = Date.UTC(2026, 0, 2, 12);
   const result = buildTransactionActivity([
