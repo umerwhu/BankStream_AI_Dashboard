@@ -44,7 +44,7 @@ IBM i / DB2 for i (AS/400)     Oracle CRM
              \                 /
                  TapData CDC
                       |
-              FDM replicated data
+              FDM (Mongodb) replicated data
                       |
         TapData joins and transformations
                       |
