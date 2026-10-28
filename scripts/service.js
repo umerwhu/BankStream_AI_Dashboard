@@ -6,6 +6,7 @@ import { performance } from 'node:perf_hooks';
 import { createConnection } from 'node:net';
 import { serviceScreen } from './service-output.js';
 import { probeHost } from './network-addresses.js';
+import { confirmShutdown } from './confirm-shutdown.js';
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url));
 const envFile = path.join(projectRoot, '.env');
@@ -158,7 +159,10 @@ async function showLogs() {
 
 const action = (process.argv[2] || 'status').toLowerCase();
 if (action === 'start') await start();
-else if (action === 'stop') await stop();
+else if (action === 'stop') {
+  if (await confirmShutdown()) await stop();
+  else console.log('Shutdown cancelled — dashboard is still running.');
+}
 else if (action === 'restart') { if (await stop() !== false) await start(); }
 else if (action === 'status') {
   const pid = getPid();

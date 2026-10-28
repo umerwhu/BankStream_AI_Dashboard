@@ -34,7 +34,7 @@ test('background service supports wildcard and loopback binding, HTTP APIs, stat
   const port = reservation.address().port;
   await new Promise(resolve=>reservation.close(resolve));
   const env = {...process.env,HOST:'0.0.0.0',PORT:String(port),NODE_ENV:'development',DATA_SOURCE:'demo',STATE_DIR:directory,LOG_DIR:path.join(directory,'logs'),LOG_LEVEL:'info',NO_COLOR:'1'};
-  const service = action => exec(process.execPath,['scripts/service.js',action],{env,timeout:15000});
+  const service = (action, ...args) => exec(process.execPath,['scripts/service.js',action,...args],{env,timeout:15000});
   try {
     const {stdout} = await service('start');
     assert.equal(stdout.match(/BANKSTREAM_AI_DASHBOARD/g).length,1);
@@ -57,14 +57,17 @@ test('background service supports wildcard and loopback binding, HTTP APIs, stat
     }
     if (!addresses.length) t.diagnostic('No LAN interface available: LAN HTTP access unverified.');
     assert.match((await service('status')).stdout,/Status\s+:  RUNNING/);
+    const cancelled = await service('stop');
+    assert.match(cancelled.stdout,/Shutdown cancelled/);
+    assert.equal((await fetch(local)).status,200);
     assert.match((await service('restart')).stdout,/SYSTEM ONLINE/);
     assert.equal((await fetch(local)).status,200);
-    assert.match((await service('stop')).stdout,/SHUTDOWN COMPLETED/);
+    assert.match((await service('stop','--yes')).stdout,/SHUTDOWN COMPLETED/);
     assert.match((await service('status')).stdout,/Status\s+:  STOPPED/);
     env.HOST='127.0.0.1';
     const loopback = (await service('start')).stdout;
     assert.ok(!loopback.includes('LAN URL'));
     assert.equal((await fetch(local)).status,200);
     for (const host of addresses) await assert.rejects(fetch(`http://${host}:${port}`,{signal:AbortSignal.timeout(1500)}));
-  } finally { await service('stop'); }
+  } finally { await service('stop','--yes'); }
 });

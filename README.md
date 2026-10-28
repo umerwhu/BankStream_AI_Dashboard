@@ -170,10 +170,44 @@ npm run service:start
 | Command | Action |
 | --- | --- |
 | `npm run service:start` | Start the dashboard in the background |
-| `npm run status` | Check process status |
+| `npm run service:status` | Show process status, configuration, and network addresses |
 | `npm run logs` | View recent logs |
-| `npm run restart` | Restart after configuration changes |
-| `npm stop` | Stop the background process |
+| `npm run service:restart` | Restart after configuration changes without a confirmation prompt |
+| `npm stop` | Ask for confirmation before stopping the background process |
+| `npm stop -- --yes` | Stop without prompting, including in automation |
+
+The shorter `npm run status` and `npm run restart` commands remain supported.
+`npm run service:stop` uses the same confirmation flow as `npm stop`.
+
+### Shutdown confirmation
+
+In an interactive terminal on Windows PowerShell, Linux, or macOS, `npm stop` asks:
+
+```text
+⚠ Are you sure you want to stop the dashboard? (y/N):
+```
+
+Enter `y` or `Y` to run the existing shutdown logic and display the shutdown
+banner. Enter `n`, `N`, or press Enter to cancel. The default is **No**; any
+other answer also cancels. Cancellation leaves the service running and exits
+successfully with:
+
+```text
+Shutdown cancelled — dashboard is still running.
+```
+
+Non-interactive commands cancel immediately without waiting for input. For scripts
+or automated shutdown, explicitly pass `--yes`:
+
+```sh
+npm stop -- --yes
+# Equivalent service alias:
+npm run service:stop -- --yes
+```
+
+`npm run service:restart` (and `npm run restart`) still stops and starts the service
+without asking for shutdown confirmation. Foreground `npm start` continues to use
+Ctrl+C to stop.
 
 Process information is saved under `STATE_DIR` (default `var/`), and logs under `LOG_DIR` (default `logs/`). Background mode does **not** automatically restart after a computer reboot; use a host service manager if required.
 
