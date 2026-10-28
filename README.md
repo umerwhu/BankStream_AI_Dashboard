@@ -175,7 +175,70 @@ npm run service:start
 | `npm run restart` | Restart after configuration changes |
 | `npm stop` | Stop the background process |
 
-Logs and process information are saved under `STATE_DIR` (default `var/`). Background mode does **not** automatically restart after a computer reboot; use a host service manager if required.
+Process information is saved under `STATE_DIR` (default `var/`), and logs under `LOG_DIR` (default `logs/`). Background mode does **not** automatically restart after a computer reboot; use a host service manager if required.
+
+### LAN deployment on Windows or Linux
+
+On the host machine, install the prerequisites above and set these values in `.env`:
+
+```ini
+HOST=0.0.0.0
+PORT=3001
+```
+
+Run `npm run service:start`, or `npm run service:restart` if already running.
+The same binding applies to foreground `npm start`. With no HOST setting, the
+default remains `127.0.0.1`; set `HOST=127.0.0.1` and restart to restrict access
+to the host again. Restart after changing HOST or PORT. Status and stop use the
+running process's recorded binding, even if `.env` has since changed.
+
+The existing terminal screen shows the configured Host, a Local URL, and a LAN URL
+for each detected IPv4 interface, labeled with its interface name. On the host,
+open `http://127.0.0.1:3001/`. From another computer on the same reachable LAN,
+open the displayed LAN URL for the host's Ethernet or Wi-Fi connection. Choose
+the interface on your shared network rather than a VPN or virtual adapter.
+`0.0.0.0` is a listening address, not a browser URL. LAN URLs are omitted for
+localhost-only binding. All browser API requests are relative to the dashboard's
+origin; TapData and AI credentials remain on the backend. No CORS changes or
+frontend configuration are needed.
+
+The project does not change firewall rules. If remote connections fail, verify
+that the host and client can reach each other, the service is running, the IP and
+configured port match, and Wi-Fi client isolation or a VPN is not blocking access.
+For Windows clients, test with `Test-NetConnection <host-LAN-IP> -Port 3001`.
+
+If your firewall blocks inbound TCP, an administrator can allow the configured
+port specifically for the LAN. Replace 3001 below if PORT is different.
+In **Administrator PowerShell**, for a trusted Windows Private network:
+
+```powershell
+New-NetFirewallRule -DisplayName "BankStream LAN TCP 3001" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3001 -RemoteAddress LocalSubnet -Profile Private
+```
+
+For a managed Domain profile, ask the network administrator to apply the appropriate
+rule. Do not disable Windows Firewall. See Microsoft's
+[New-NetFirewallRule documentation](https://learn.microsoft.com/en-us/powershell/module/netsecurity/new-netfirewallrule).
+
+On Linux with UFW, replace the example subnet with your actual LAN subnet:
+
+```sh
+sudo ufw allow proto tcp from 192.168.1.0/24 to any port 3001
+```
+
+For other Linux firewalls, ask the administrator for the equivalent LAN-scoped
+inbound TCP rule. See the [Ubuntu firewall guide](https://ubuntu.com/server/docs/firewalls/).
+These commands are instructions only; the application never executes them.
+
+Binding to `0.0.0.0` listens on all IPv4 interfaces, so host firewall rules determine
+who can connect. No router forwarding, public tunnel, or public internet exposure
+is configured automatically. Development mode retains the existing demo roles;
+production deployment still requires the existing trusted identity proxy and
+network controls. No authentication behavior changes with HOST.
+
+Verify the dashboard, API requests, auto-refresh, AI Chat and AI Analysis from a
+second computer after setup. Host-side LAN-IP checks do not verify another device's
+connectivity or its firewall path. Live TapData and AI functionality additionally
+require the existing backend integration configuration and provider connectivity.
 
 ## Troubleshooting and verification
 

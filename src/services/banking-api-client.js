@@ -1,3 +1,4 @@
+import { loggedFetch } from '../utils/logged-fetch.js';
 import { env } from '../config/env.js';
 import { HttpError } from '../middleware/errors.js';
 
@@ -10,7 +11,7 @@ export const bankingApiClient = {
     const headers = env.bankingApiAuthHeader && env.bankingApiAuthValue ? { [env.bankingApiAuthHeader]: env.bankingApiAuthValue } : {};
     let response;
     for(let attempt=0;attempt<3;attempt++){
-      try { response=await fetch(url,{headers,signal:AbortSignal.timeout(15000)});if(![429,502,503,504].includes(response.status)||attempt===2)break;const retryAfter=Number(response.headers.get('retry-after'));await new Promise(resolve=>setTimeout(resolve,Math.min(Number.isFinite(retryAfter)&&retryAfter>0?retryAfter*1000:250*2**attempt,2000))); }
+      try { response=await loggedFetch(url,{headers,signal:AbortSignal.timeout(15000)},{apiName:'Banking API',endpoint:'[configured banking endpoint]',attempt,maxAttempts:3});if(![429,502,503,504].includes(response.status)||attempt===2)break;const retryAfter=Number(response.headers.get('retry-after'));await new Promise(resolve=>setTimeout(resolve,Math.min(Number.isFinite(retryAfter)&&retryAfter>0?retryAfter*1000:250*2**attempt,2000))); }
       catch{if(attempt===2)throw new HttpError(502,'Integrated banking data API is unavailable','UPSTREAM_UNAVAILABLE');await new Promise(resolve=>setTimeout(resolve,250*2**attempt));}
     }
     if(!response)throw new HttpError(502,'Integrated banking data API is unavailable','UPSTREAM_UNAVAILABLE');

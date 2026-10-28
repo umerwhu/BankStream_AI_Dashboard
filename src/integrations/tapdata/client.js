@@ -1,3 +1,4 @@
+import { loggedFetch } from '../../utils/logged-fetch.js';
 import { env } from '../../config/env.js';
 import { HttpError } from '../../middleware/errors.js';
 
@@ -25,7 +26,7 @@ async function accessToken(){
   const headers={'Content-Type':'application/x-www-form-urlencoded'};
   if(env.tapdataTokenAuthMethod==='client_secret_basic'){headers.Authorization=`Basic ${Buffer.from(`${env.tapdataClientId}:${env.tapdataClientSecret}`).toString('base64')}`;form.delete('client_id');form.delete('client_secret');}
   else if(env.tapdataTokenAuthMethod!=='client_secret_post')throw new HttpError(500,'TAPDATA_TOKEN_AUTH_METHOD must be client_secret_post or client_secret_basic','CONFIGURATION_ERROR');
-  let response;try{response=await fetch(env.tapdataTokenUrl,{method:'POST',headers,body:form,signal:AbortSignal.timeout(env.tapdataRequestTimeoutMs)});}catch{throw new HttpError(502,'TapData authorization service is unavailable','TAPDATA_AUTH_UNAVAILABLE');}
+  let response;try{response=await loggedFetch(env.tapdataTokenUrl,{method:'POST',headers,body:form,signal:AbortSignal.timeout(env.tapdataRequestTimeoutMs)},{apiName:'TapData OAuth',endpoint:'[configured token endpoint]'});}catch{throw new HttpError(502,'TapData authorization service is unavailable','TAPDATA_AUTH_UNAVAILABLE');}
   if(!response.ok)throw new HttpError(502,'TapData authorization failed','TAPDATA_AUTH_FAILED');
   let body;try{body=await response.json();}catch{throw new HttpError(502,'TapData authorization returned invalid JSON','TAPDATA_AUTH_FAILED');}
   if(typeof body.access_token!=='string'||!body.access_token)throw new HttpError(502,'TapData authorization response did not include an access token','TAPDATA_AUTH_FAILED');
@@ -57,7 +58,7 @@ async function requestPage(collection,page,filter){
   let body;if(env.tapdataFindRequestStyle==='body'){headers['Content-Type']='application/json';body=JSON.stringify({filter,page,pageSize:env.tapdataPageSize});}
   let response;
   for(let attempt=0;attempt<3;attempt++){
-    try{response=await fetch(makeFindUrl(collection,page,filter),{method:env.tapdataFindMethod,headers,...(body?{body}:{}),signal:AbortSignal.timeout(env.tapdataRequestTimeoutMs)});if(![429,502,503,504].includes(response.status)||attempt===2)break;await new Promise(resolve=>setTimeout(resolve,250*2**attempt));}
+    try{response=await loggedFetch(makeFindUrl(collection,page,filter),{method:env.tapdataFindMethod,headers,...(body?{body}:{}),signal:AbortSignal.timeout(env.tapdataRequestTimeoutMs)},{apiName:'TapData',endpoint:env.tapdataFindPathTemplate.replace('{collection}',collection).split('?')[0],attempt,maxAttempts:3});if(![429,502,503,504].includes(response.status)||attempt===2)break;await new Promise(resolve=>setTimeout(resolve,250*2**attempt));}
     catch{if(attempt===2)throw new HttpError(502,`TapData request failed for published table ${collection}`,'TAPDATA_UPSTREAM_UNAVAILABLE');await new Promise(resolve=>setTimeout(resolve,250*2**attempt));}
   }
   if(!response?.ok)throw new HttpError(response?.status===404?404:502,`TapData published API request failed for ${collection}`,'TAPDATA_UPSTREAM_ERROR');

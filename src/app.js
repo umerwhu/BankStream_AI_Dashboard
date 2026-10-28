@@ -1,3 +1,4 @@
+import { requestLogging } from './middleware/request-logging.js';
 import express from 'express';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,6 +9,7 @@ import { securityHeaders, rateLimit } from './middleware/security.js';
 const app = express();
 const publicDir = fileURLToPath(new URL('../public/', import.meta.url));
 app.disable('x-powered-by');
+app.use(requestLogging);
 app.use(securityHeaders);
 app.use(express.json({ limit: '256kb' }));
 app.use('/api',(req,res,next)=>{res.set('Cache-Control','no-store, max-age=0');res.set('Pragma','no-cache');next();});

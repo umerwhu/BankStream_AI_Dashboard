@@ -4,6 +4,7 @@ const integerSetting=(key,fallback,min)=>{const value=Number(process.env[key]);r
 const port=integerSetting('PORT',3001,1);
 if(port>65535)throw new Error('PORT must be an integer between 1 and 65535');
 export const env = Object.freeze({
+  host: process.env.HOST || '127.0.0.1',
   port,
   nodeEnv: process.env.NODE_ENV || 'development',
   trustIdentityProxy: process.env.TRUST_IDENTITY_PROXY === 'true',
