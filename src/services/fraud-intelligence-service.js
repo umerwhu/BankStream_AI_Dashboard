@@ -17,13 +17,13 @@ const safeKyc=x=>pick(x,['KYC_RECORD_ID','CUSTOMER_ID','KYC_STATUS','RISK_RATING
 const safeCard=x=>pick(x,['CARD_ID','CUSTOMER_ID','ACCOUNT_ID','CARD_TYPE','CARD_NETWORK','MASKED_CARD_NUMBER','CARD_STATUS','ISSUE_DATE','EXPIRY_DATE']);
 const safePayment=x=>pick(x,['PAYMENT_ID','CUSTOMER_ID','SOURCE_ACCOUNT_ID','PAYMENT_TYPE','PAYMENT_AMOUNT','CURRENCY','INITIATED_TIMESTAMP','PAYMENT_STATUS','CHANNEL']);
 
-let bundleCache=null,bundleCacheAt=0,bundlePending=null;
+let bundleCache=null,bundleCacheAt=0,bundlePending=null,bundleGeneration=0;
 async function rawSourceBundle(scope){
   if(bankingDataService.mode==='mongodb'&&scope&&!scope.all&&(scope.customerIds||[]).length===1)return bankingDataService.getBundle(scope);
   if(bundleCache&&Date.now()-bundleCacheAt<2000)return bundleCache;
   if(bundlePending)return bundlePending;
-  bundlePending=bankingDataService.getBundle();
-  try{bundleCache=await bundlePending;bundleCacheAt=Date.now();return bundleCache;}finally{bundlePending=null;}
+  const generation=bundleGeneration,pending=bankingDataService.getBundle();bundlePending=pending;
+  try{const bundle=await pending;if(generation===bundleGeneration){bundleCache=bundle;bundleCacheAt=Date.now();}return bundle;}finally{if(generation===bundleGeneration)bundlePending=null;}
 }
 function scopeBundle(b,scope){
   if(!scope||scope.all)return b;
@@ -37,6 +37,7 @@ function scopeBundle(b,scope){
 async function sourceBundle(scope){return scopeBundle(await rawSourceBundle(scope),scope);}
 export const fraudIntelligenceService={
   getSourceBundle:sourceBundle,
+  refreshSource(){bundleGeneration++;bundleCache=null;bundleCacheAt=0;bundlePending=null;bankingDataService.invalidateCache();},
   async getTransactions(scope){
     const b=await sourceBundle(scope),dashboard=await this.getDashboard({},scope),flagged=new Set(dashboard.alerts.flatMap(a=>a.evidence.map(x=>x.id)));
     const accounts=new Map(b.BANK_ACCOUNT.map(x=>[x.ACCOUNT_ID,x])),relations=new Map(),names=new Map((b.CUSTOMER||[]).map(x=>[String(x.CUSTOMER_ID),x.CUSTOMER_NAME]));
