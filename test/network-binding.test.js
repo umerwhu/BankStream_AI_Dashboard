@@ -17,8 +17,9 @@ test('network presentation identifies each interface and only advertises enabled
   assert.ok(!rows.some(([,value])=>String(value).includes('http://0.0.0.0')));
   assert.equal(networkRows('127.0.0.1',3001,interfaces).filter(([label])=>label==='LAN URL').length,0);
   assert.equal(probeHost('0.0.0.0'),'127.0.0.1');
-  const screen = serviceScreen({action:'start',outcome:'success',host:'0.0.0.0',port:3001,interfaces,environment:'development',durationMs:10});
+  const screen = serviceScreen({action:'start',outcome:'success',host:'0.0.0.0',port:3001,interfaces,environment:'development',durationMs:10}).replace(/\x1b\[[0-9;]*m/g, '');
   assert.match(screen,/LAN URL\s+:  http:\/\/192\.168\.1\.10:3001\/ \(Ethernet\)/);
+  assert.match(screen,/LAN URL\s+:  http:\/\/10\.0\.0\.4:3001\/ \(WiFi\)/);
 });
 
 test('HOST remains localhost and PORT remains 3001 when unset', async () => {
