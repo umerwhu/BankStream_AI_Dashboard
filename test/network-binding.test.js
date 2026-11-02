@@ -4,7 +4,8 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { createServer } from 'node:net';
 import { networkInterfaces, tmpdir } from 'node:os';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { networkRows, probeHost } from '../scripts/network-addresses.js';
 import { serviceScreen } from '../scripts/service-output.js';
@@ -29,11 +30,14 @@ test('HOST remains localhost and PORT remains 3001 when unset', async () => {
 
 test('background service supports wildcard and loopback binding, HTTP APIs, status, restart and stop', {timeout:25000}, async t => {
   const directory = await mkdtemp(path.join(tmpdir(),'bankstream-lan-'));
+  // Make server startup exceed the old one-second readiness check.
+  const preload = path.join(directory, 'slow-start.mjs');
+  await writeFile(preload, "if (process.argv[1]?.endsWith('server.js')) await new Promise(resolve => setTimeout(resolve, 1500));\n");
   const reservation = createServer();
   await new Promise(resolve=>reservation.listen(0,'127.0.0.1',resolve));
   const port = reservation.address().port;
   await new Promise(resolve=>reservation.close(resolve));
-  const env = {...process.env,HOST:'0.0.0.0',PORT:String(port),NODE_ENV:'development',DATA_SOURCE:'demo',STATE_DIR:directory,LOG_DIR:path.join(directory,'logs'),LOG_LEVEL:'info',NO_COLOR:'1'};
+  const env = {...process.env,NODE_OPTIONS:`${process.env.NODE_OPTIONS || ''} --import=${pathToFileURL(preload).href}`,HOST:'0.0.0.0',PORT:String(port),NODE_ENV:'development',DATA_SOURCE:'demo',STATE_DIR:directory,LOG_DIR:path.join(directory,'logs'),LOG_LEVEL:'info',NO_COLOR:'1'};
   const service = (action, ...args) => exec(process.execPath,['scripts/service.js',action,...args],{env,timeout:15000});
   try {
     const {stdout} = await service('start');

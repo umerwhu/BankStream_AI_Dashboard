@@ -130,16 +130,24 @@ async function start() {
     if (child.pid === undefined) throw new Error('Could not start the dashboard process.');
     const startedAt = new Date().toISOString();
     writeFileSync(pidFile, JSON.stringify({ pid: child.pid, startedAt, host, port }, null, 2));
-    await sleep(1000);
-    if (spawnError) throw spawnError;
-    try {
-      process.kill(child.pid, 0);
-    } catch (error) {
-      if (error.code !== 'ESRCH') throw error;
-      rmSync(pidFile, { force: true });
-      throw startupFailure(child.pid);
+    const deadline = performance.now() + 10000;
+    while (true) {
+      if (spawnError) throw spawnError;
+      try {
+        process.kill(child.pid, 0);
+      } catch (error) {
+        if (error.code !== 'ESRCH') throw error;
+        rmSync(pidFile, { force: true });
+        throw startupFailure(child.pid);
+      }
+      try {
+        await verifyListening();
+        break;
+      } catch (error) {
+        if (performance.now() >= deadline) throw error;
+        await sleep(100);
+      }
     }
-    await verifyListening();
     process.kill(child.pid, 0);
     screen('start', 'success', began, { pid: child.pid, startedAt });
   } catch (error) { screen('start', 'failure', began, { error, pid }); process.exitCode = 1; }

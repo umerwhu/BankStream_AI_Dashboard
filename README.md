@@ -83,16 +83,29 @@ IBM i / DB2 for i (AS/400)     Oracle CRM
 
 **Interpretation:** Fraud indicators are deterministic **review signals**, not confirmed fraud. AI suggestions require human review before any banking action.
 
-## Choose how to run the demo
+## Deploy the full TapData banking demo
 
-There are two practical ways to use this project:
+The **Full TapData Demo** is the recommended way to demonstrate the complete banking workflow:
+
+**Source Databases → TapData CDC → FDM → MDM → Published APIs → AI Dashboard**
+
+For a quick UI preview without live banking connections, Demo Mode is also supported: set `DATA_SOURCE=demo` in `.env`, then use the same test and service commands below. Demo data does not demonstrate live CDC updates.
 
 | Mode | Best for | What you need |
 | --- | --- | --- |
-| **Demo mode** | Exploring the UI quickly | Node.js and this repository; no live banking connection |
-| **TapData mode** | Demonstrating the complete real-time banking flow | Source databases, imported and running TapData tasks, published APIs, and dashboard configuration |
+| **Full TapData Demo (recommended)** | Demonstrating the complete real-time banking flow | Source databases, imported and running TapData tasks, published APIs, and dashboard configuration |
 
-### Option A — Quick start (demo mode)
+### Prerequisites and repository dependencies
+
+For the Full TapData Demo, have these ready before starting:
+
+- Access to IBM i / DB2 for i and Oracle, with permission to prepare the sample schemas/data and configure CDC as described in [BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder).
+- A TapData environment that can reach both source databases and the MongoDB target, with access to import/configure tasks and publish APIs. Follow [TapData Tasks](https://github.com/umerwhu/Tapdata_Tasks) for connection requirements and import instructions.
+- A dashboard host that can reach the published TapData APIs and OAuth endpoint, with deployment-specific URLs and credentials. AI Analysis and AI Chat also require a supported provider, valid API key, and provider connectivity; see [AI Analysis and AI Chat](#ai-analysis-and-ai-chat).
+
+The repositories depend on one another in this order: **BankStream Feeder** prepares source schemas/data → **TapData Tasks** replicates that data into FDM, transforms it into MongoDB MDM models, and publishes APIs → **BankStream AI Dashboard** consumes those APIs. The Feeder simulator generates subsequent source changes; it does not replace TapData replication or transformation tasks. Repository roles and links are also listed under [Related projects](#related-projects).
+
+Prepare the dashboard repository first:
 
 **Prerequisites:** Node.js **22.9+** (or **20.18+**) and npm.
 
@@ -109,33 +122,51 @@ There are two practical ways to use this project:
    npm ci
    ```
 
-3. Copy `.env.example` to `.env`. Leave `DATA_SOURCE=demo` selected and review the example configuration.
+### Full TapData Demo setup
 
-4. Start the dashboard:
-
-   ```sh
-   npm start
-   ```
-
-5. Open **http://127.0.0.1:3001**.
-
-Use **Ctrl+C** to stop the foreground process. Demo mode lets you explore the interface without connecting to the banking systems. The displayed data in this mode is not evidence of live CDC activity.
-
-### Option B — Run the full TapData banking demo
-
-Use the three related repositories together:
+Complete these steps in order. Confirm each stage is working before starting the next:
 
 1. **Prepare source databases and data.** Follow the [BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder) repository for IBM i / DB2 for i and Oracle schemas, sample data, and the simulator that generates inserts and updates.
 2. **Import TapData replication tasks.** Follow the [TapData Tasks](https://github.com/umerwhu/Tapdata_Tasks) guide, update source/target connection settings, test the connections, and **start replication tasks first**.
 3. **Import and start transformation tasks.** Confirm that replicated FDM data is available, then start the TapData transformations that build and update the MDM models in MongoDB, including Customer 360.
 4. **Import and publish the API services.** Check service names, target table/collection names, and paths against the imported API package. Verify the published APIs return expected data.
-5. **Configure the dashboard.** In `.env`, set `DATA_SOURCE=tapdata` and fill in the actual TapData API URL and OAuth settings using `.env.example` and [API integration documentation](docs/api-integration.md).
-6. **Start or restart the dashboard** using `npm start` (foreground) or the background commands below. Open **http://127.0.0.1:3001**.
-7. **Observe changes.** Run the Feeder to generate new source inserts/updates, verify that TapData processes them, and check whether the corresponding API-backed dashboard views reflect the updated data.
+5. **Configure the dashboard.** Copy `.env.example` to `.env`, then set `DATA_SOURCE=tapdata` and fill in the actual TapData API URL and OAuth settings using `.env.example` and [API integration documentation](docs/api-integration.md).
+6. **Configure AI features.** Follow [AI Analysis and AI Chat](#ai-analysis-and-ai-chat) using your provider settings and key; these are required to demonstrate live AI responses.
+7. **Run the automated tests.** Confirm they pass before starting the service:
+
+   ```sh
+   npm test
+   ```
+
+8. **Start the dashboard service:**
+
+   ```sh
+   npm run service:start
+   npm run service:status
+   ```
+
+   Open **http://127.0.0.1:3001**. If already running, use `npm run service:restart`. For foreground operation, use `npm start` and stop with **Ctrl+C**.
+9. **Verify the complete demo.** Follow the checklist and real-time update steps below before presenting it.
 
 **Startup order matters:** **Replication → Transformation → Publish APIs → Dashboard**. Start the Feeder when you are ready to demonstrate changing source data.
 
 The full pipeline and task import instructions live in the companion repositories rather than being duplicated here.
+
+### Deployment checklist
+
+- [ ] Source schemas and sample data are prepared, and TapData source/target connections pass their checks.
+- [ ] Replication tasks are running with FDM data available; transformation tasks have populated the MongoDB MDM models.
+- [ ] Published APIs return expected customer, account, relationship, and transaction data using the configured OAuth settings and service mapping; see [API integration documentation](docs/api-integration.md).
+- [ ] The dashboard runs with `DATA_SOURCE=tapdata`, displays the API-backed customer data, and live AI features respond with the configured provider.
+
+### Verify end-to-end data and real-time updates
+
+1. **Establish a baseline.** Open Customer 360 and Transaction & Fraud Intelligence, select a customer/account returned by the published APIs, and note its identifier and a visible field or transaction. Compare with the corresponding API response.
+2. **Run the Feeder.** In the [BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder) repository, follow its documented simulator setup and run instructions using your source database connections. Generate a supported insert/update and record the affected customer/account/transaction identifier and changed value. Use the Feeder's documented controls to stop the simulator when finished.
+3. **Trace the change through TapData.** Confirm the source record changed, replication processed it into FDM, and transformation updated the corresponding MDM record. Inspect task progress/errors in TapData; a successful API request alone does not confirm CDC health.
+4. **Check the published API.** Request the relevant record and confirm the new value or transaction appears. If it does not, check the replication, transformation, and API stages before investigating the dashboard.
+5. **Check the dashboard.** Allow for the configured backend cache lifetime (`TAPDATA_CACHE_TTL_MS` in `.env.example`), then refresh/reopen the affected view and compare the same identifier/value. API reads are bounded by the configured pagination/scan limits, so choose a record included in the returned data; see [API integration documentation](docs/api-integration.md). Do not use portfolio totals alone as proof that a particular change arrived.
+6. **Check AI features.** Run AI Analysis and ask AI Chat about the selected customer's available data. Confirm both return responses; review them against the displayed data. AI text is advisory and is not evidence of CDC health or measured replication latency.
 
 ## Configuration and AI integration
 
@@ -143,11 +174,10 @@ The `.env` file controls runtime settings. Copy it from `.env.example`, then set
 
 ### Data source selection
 
-`DATA_SOURCE` selects one mode at a time:
+Set `DATA_SOURCE=tapdata` for this deployment:
 
 | Setting | Meaning |
 | --- | --- |
-| `demo` | Local demonstration data |
 | `tapdata` | TapData published API integration — recommended for the full banking demo |
 
 
@@ -161,7 +191,7 @@ AI functionality depends on valid credentials, provider availability, and the cu
 
 ## Running in the background
 
-Start the application without keeping the terminal open:
+After `npm test` passes, start the application without keeping the terminal open:
 
 ```sh
 npm run service:start
@@ -291,13 +321,6 @@ npm test
 ```
 
 A successful API request **does not by itself confirm CDC pipeline health**; verify task execution in TapData.
-
-## Security and production considerations
-
-- Store secrets in `.env` or a secret manager, not in source control or frontend files.
-- Use TLS, authentication, authorization, and a trusted identity gateway before exposing the dashboard publicly.
-- Validate data permissions, transformation rules, review indicators, and AI output before considering production use.
-- Where supported by the application, workflow storage uses local JSON by default; PostgreSQL can be configured with `DATABASE_URL`.
 
 ## Related projects
 
