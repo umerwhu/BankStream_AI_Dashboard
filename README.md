@@ -1,4 +1,4 @@
-﻿# BankStream AI Dashboard
+# BankStream AI Dashboard
 
 ## Introduction
 
@@ -82,19 +82,18 @@ Start stages in this order: **Replication → Transformation → Published APIs*
    DATA_SOURCE=tapdata
    ```
 
-5. **Configure TapData API access and AI credentials** using [.env.example](.env.example).
+5. **Configure TapData API access and AI credentials** in `.env`, using [.env.example](.env.example) as a reference. Assign real values to the following settings:
 
    | Settings | What to enter |
    | --- | --- |
-   | `TAPDATA_API_BASE_URL` | Your published API host/base URL. |
-   | `TAPDATA_FIND_PATH_TEMPLATE`, `TAPDATA_COLLECTION_MAP` | Paths and service mappings matching your published APIs. The reference uses `/api/v1/{collection}` and `{"CUSTOMER":"MDM_CUSTOMER360"}`. |
-   | `TAPDATA_FIND_METHOD`, `TAPDATA_FIND_REQUEST_STYLE` | The reference integration uses `GET` and `query`. |
-   | `TAPDATA_TOKEN_URL`, `TAPDATA_CLIENT_ID`, `TAPDATA_CLIENT_SECRET` | Your OAuth endpoint and client credentials. |
-   | `TAPDATA_TOKEN_AUTH_METHOD` | The supported `client_secret_post` or `client_secret_basic` method. |
-   | `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL` | Your provider (`deepseek` or `openai`), model, and matching API root. |
-   | `DEEPSEEK_API_KEY` or `OPENAI_API_KEY` | The selected provider's API key. |
+   | `TAPDATA_API_BASE_URL` | Your published TapData API base URL. |
+   | `TAPDATA_TOKEN_URL` | Your TapData OAuth token endpoint URL. |
+   | `TAPDATA_CLIENT_ID` | Your TapData OAuth client ID. |
+   | `TAPDATA_CLIENT_SECRET` | Your TapData OAuth client secret. |
+   | `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL` | Your provider (`deepseek` or `openai`), model, and matching API root. Keep the existing values if using the configured DeepSeek model and endpoint. |
+   | `DEEPSEEK_API_KEY` or `OPENAI_API_KEY` | Your real API key for the selected provider. Only that provider's key is required. |
 
-   Replace placeholder values with your deployment settings. The example uses DeepSeek; when switching providers, update the model and API root as well as the key. Keep `.env` and real credentials out of Git.
+   Other settings can retain their existing values for the reference integration. Keep `.env` and real credentials out of Git.
 
    See [API integration documentation](docs/api-integration.md) for authentication, service mappings, pagination, and response requirements.
 
