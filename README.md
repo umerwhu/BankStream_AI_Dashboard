@@ -29,7 +29,7 @@ AS400 holds core banking records, and Oracle holds CRM data. TapData replicates 
 - Published TapData API URLs and authentication credentials accessible from the dashboard host.
 - A DeepSeek or OpenAI API key and provider connectivity for live AI features.
 
-The complete demo uses three repositories: **BankStream Feeder** for source preparation and activity, **Tapdata_Tasks** for integration and APIs, and **BankStream_AI_Dashboard** for the user interface. Each repository documents its own setup requirements.
+The complete demo uses two repositories: **BankStream Feeder** for source preparation, activity, integration, and APIs, and **BankStream_AI_Dashboard** for the user interface. The Feeder repository includes the TapData tasks, configuration files, and setup instructions. Each repository documents its own setup requirements.
 
 ## Deployment Guide
 
@@ -43,7 +43,7 @@ Follow the [BankStream Feeder README](https://github.com/umerwhu/BankStream_Feed
 
 ### Step 2 — Configure TapData (Tapdata_Tasks)
 
-TapData handles CDC replication, transformations, MongoDB MDM models, and published APIs. Follow the [Tapdata_Tasks README](https://github.com/umerwhu/Tapdata_Tasks#readme) to configure and deploy the pipeline.
+TapData handles CDC replication, transformations, MongoDB MDM models, and published APIs. Follow the [TapData tasks folder in BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder/tree/main/tapdata_tasks), which contains the task files and README with setup instructions, to configure and deploy the pipeline.
 
 Start stages in this order: **Replication → Transformation → Published APIs**. Confirm the APIs return expected customer and banking records before starting the dashboard.
 
@@ -160,12 +160,12 @@ At the stop prompt, enter `y` to stop; other answers cancel. For non-interactive
 | Customer or transaction data is missing | Confirm `DATA_SOURCE=tapdata` and restart. Check API results, service mappings, and scan limits in the [integration guide](docs/api-integration.md). |
 | AI features do not work | Check provider, model, API root, key, and connectivity. Restart after configuration changes and inspect backend logs. |
 
-For source database or simulation issues, use the [Feeder documentation](https://github.com/umerwhu/BankStream_Feeder#readme). For replication, transformation, or API publishing issues, use the [Tapdata_Tasks guide](https://github.com/umerwhu/Tapdata_Tasks#readme).
+For source database or simulation issues, use the [Feeder documentation](https://github.com/umerwhu/BankStream_Feeder#readme). For replication, transformation, or API publishing issues, use the [BankStream Feeder repository](https://github.com/umerwhu/BankStream_Feeder).
 
 ## Related Projects
 
 | Repository | Purpose |
 | --- | --- |
 | [BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder) | Source schema/sample-data scripts and commands to generate banking activity. |
-| [Tapdata_Tasks](https://github.com/umerwhu/Tapdata_Tasks) | CDC replication, transformations, MongoDB MDM models, and published API packages. |
+| [BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder) | CDC replication, transformations, MongoDB MDM models, and published API packages. |
 | [BankStream AI Dashboard](https://github.com/umerwhu/BankStream_AI_Dashboard) | Customer 360 dashboard, transaction intelligence, and AI-assisted insights. |
