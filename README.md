@@ -17,10 +17,6 @@ AS400 + Oracle → TapData CDC → FDM (MongoDB)
 
 AS400 holds core banking records, and Oracle holds CRM data. TapData replicates source data into FDM, then joins and transforms it into MongoDB MDM models. The dashboard reads published APIs through its Node.js backend. TapData maintains the models; API and AI credentials stay on the backend.
 
-## Dashboard Preview
-
-![BankStream AI Dashboard UI](docs/images/dashboard.jpg)
-
 ## Prerequisites
 
 - Git, npm, and Node.js 22.9+ or 20.18+ for the dashboard.
@@ -33,21 +29,7 @@ The complete demo uses two repositories: **BankStream Feeder** for source prepar
 
 ## Deployment Guide
 
-Complete the following steps in order. Detailed source and pipeline setup belongs in the companion guides; dashboard installation is covered here.
-
-### Step 1 — Prepare Source Databases (BankStream Feeder)
-
-Prepare the AS400 and Oracle schemas, tables, and sample data before configuring the pipeline. Ensure the demo customer and linked account records are available.
-
-Follow the [BankStream Feeder README](https://github.com/umerwhu/BankStream_Feeder#readme) and its linked database preparation documentation for setup instructions.
-
-### Step 2 — Configure TapData (Tapdata_Tasks)
-
-TapData handles CDC replication, transformations, MongoDB MDM models, and published APIs. Follow the [TapData tasks folder in BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder/tree/main/tapdata_tasks), which contains the task files and README with setup instructions, to configure and deploy the pipeline.
-
-Start stages in this order: **Replication → Transformation → Published APIs**. Confirm the APIs return expected customer and banking records before starting the dashboard.
-
-### Step 3 — Deploy BankStream AI Dashboard
+For source database and TapData pipeline setup, follow the [BankStream Feeder README](https://github.com/umerwhu/BankStream_Feeder#readme). Once the published APIs are available, install and configure the dashboard below.
 
 1. **Clone the dashboard repository.**
 
@@ -94,8 +76,6 @@ Start stages in this order: **Replication → Transformation → Published APIs*
    | `DEEPSEEK_API_KEY` or `OPENAI_API_KEY` | Your real API key for the selected provider. Only that provider's key is required. |
 
    Other settings can retain their existing values for the reference integration. Keep `.env` and real credentials out of Git.
-
-   See [API integration documentation](docs/api-integration.md) for authentication, service mappings, pagination, and response requirements.
 
 6. **Run tests, then start the dashboard.** Continue after the tests pass.
 
@@ -167,5 +147,4 @@ For source database or simulation issues, use the [Feeder documentation](https:/
 | Repository | Purpose |
 | --- | --- |
 | [BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder) | Source schema/sample-data scripts and commands to generate banking activity. |
-| [BankStream Feeder](https://github.com/umerwhu/BankStream_Feeder) | CDC replication, transformations, MongoDB MDM models, and published API packages. |
 | [BankStream AI Dashboard](https://github.com/umerwhu/BankStream_AI_Dashboard) | Customer 360 dashboard, transaction intelligence, and AI-assisted insights. |
