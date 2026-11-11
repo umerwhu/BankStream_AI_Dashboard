@@ -40,6 +40,12 @@ function rowsFrom(payload) {
 
 // Node isolates test files: .env and real TapData requests stay in this process.
 test('real TapData published APIs', async t => {
+  try { loadEnvFile(new URL('../.env', import.meta.url)); }
+  catch { assert.fail('Cannot load .env; set DATA_SOURCE=demo to skip live checks or configure DATA_SOURCE=tapdata'); }
+  if (process.env.DATA_SOURCE === 'demo') {
+    t.skip('DATA_SOURCE=demo: real TapData API calls are disabled');
+    return;
+  }
   const started = performance.now();
   let apis = [], passed = 0, failed = 0, untested = 0, token, configuration;
   const run = async (name, action) => {
@@ -62,8 +68,6 @@ test('real TapData published APIs', async t => {
 
   try {
     const discovered = await run('TapData API discovery', async () => {
-      try { loadEnvFile(new URL('../.env', import.meta.url)); }
-      catch { throw new SafeFailure('Cannot load .env; configured APIs could not be discovered or tested'); }
       let map;
       try { map = JSON.parse(process.env.TAPDATA_COLLECTION_MAP || '{}'); }
       catch { throw new SafeFailure('Invalid TAPDATA_COLLECTION_MAP JSON; configured APIs could not be discovered'); }

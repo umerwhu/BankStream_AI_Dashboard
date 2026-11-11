@@ -58,29 +58,37 @@ For source database and TapData pipeline setup, follow the [BankStream Feeder RE
    cp .env.example .env
    ```
 
-4. **Select the TapData data source.** Edit `.env`:
+4. **Choose sample data or live data.** Set one of these values in `.env`:
+
+   | Value | Dashboard data | What `npm test` does |
+   | --- | --- | --- |
+   | `DATA_SOURCE=demo` | Sample data; no TapData connection needed. | Runs application tests and skips real TapData API calls. |
+   | `DATA_SOURCE=tapdata` | Real data from TapData. | Also calls the 13 TapData APIs that feed the dashboard and checks that each returns records. |
+
+5. **Optional: enable AI Analysis and AI Chat.** In `.env`, set `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL`, and your provider's key: `DEEPSEEK_API_KEY` or `OPENAI_API_KEY`. See [.env.example](.env.example) for examples. You can skip this step to view dashboard data and run `npm test`.
+
+6. **Run tests and start the dashboard.** If you chose `demo`, no TapData credentials are needed. If you chose `tapdata`, first set these four values in `.env`:
 
    ```ini
-   DATA_SOURCE=tapdata
+   TAPDATA_API_BASE_URL=http://127.0.0.1:3080
+   TAPDATA_TOKEN_URL=http://127.0.0.1:3030/oauth/token
+   TAPDATA_CLIENT_ID=YOUR_TAPDATA_CLIENT_ID
+   TAPDATA_CLIENT_SECRET=YOUR_TAPDATA_CLIENT_SECRET
    ```
 
-5. **Configure TapData API access and AI credentials** in `.env`, using [.env.example](.env.example) as a reference. Assign real values to the following settings:
+   Use your real client ID and secret. Change the URLs if TapData runs on another computer or different ports. Keep the other TapData settings from `.env.example` for the reference setup. These same values connect the live dashboard to TapData. Keep `.env` and real credentials out of Git.
 
-   | Settings | What to enter |
-   | --- | --- |
-   | `TAPDATA_API_BASE_URL` | Your published TapData API base URL. |
-   | `TAPDATA_TOKEN_URL` | Your TapData OAuth token endpoint URL. |
-   | `TAPDATA_CLIENT_ID` | Your TapData OAuth client ID. |
-   | `TAPDATA_CLIENT_SECRET` | Your TapData OAuth client secret. |
-   | `AI_PROVIDER`, `AI_MODEL`, `AI_BASE_URL` | Your provider (`deepseek` or `openai`), model, and matching API root. Keep the existing values if using the configured DeepSeek model and endpoint. |
-   | `DEEPSEEK_API_KEY` or `OPENAI_API_KEY` | Your real API key for the selected provider. Only that provider's key is required. |
-
-   Other settings can retain their existing values for the reference integration. Keep `.env` and real credentials out of Git.
-
-6. **Run tests, then start the dashboard.** Continue after the tests pass.
+   From the dashboard folder, run:
 
    ```sh
    npm test
+   ```
+
+   If `npm test` fails only on the live TapData checks, you can still run the start commands below to explore the dashboard. However, live data may be missing or incomplete, so its accuracy cannot be guaranteed until the TapData issue is fixed. Check your connection and credentials, or use `DATA_SOURCE=demo` for sample data. Investigate any other test failures before continuing.
+
+   Start the dashboard:
+
+   ```sh
    npm run service:start
    npm run service:status
    ```
@@ -95,12 +103,10 @@ For a UI preview without live integration, set `DATA_SOURCE=demo`. Sample data d
 
 ## Live CDC Demonstration
 
-1. Open the dashboard, select a customer, and note a transaction, balance, or KYC value.
-2. Use BankStream Feeder to generate a transaction or KYC update for that customer. Follow the [Feeder README](https://github.com/umerwhu/BankStream_Feeder#demo-commands) for all simulation and verification commands.
-3. Allow TapData to capture the source change and process it through FDM, MDM, and the published APIs.
-4. Refresh or reopen the dashboard view and confirm the same customer's updated information.
-
-Allow for the backend cache (`TAPDATA_CACHE_TTL_MS`, 10 seconds in the example). API reads have configured scan limits, so choose a record included in the returned data. A successful API request or AI response alone does not confirm CDC health; use the companion guides to verify the pipeline.
+1. Open the dashboard and go to **Customer 360**. Search for customer ID **100002** and open their details. In **Accounts**, find the **Checking** account with account ID **1000021** and note its balance. Review the transactions for this account and note a transaction amount, then open **KYC** and note the current KYC status. Compare these values after making the source changes below.
+2. In TapData, confirm that the source-to-FDM replication tasks and FDM-to-MDM transformation tasks are running, and that the published APIs are available. Keep these tasks and APIs running during the demo.
+3. Use BankStream Feeder to generate a transaction or KYC update for that customer. Follow the [Feeder README](https://github.com/umerwhu/BankStream_Feeder#demo-commands) for all simulation and verification commands.
+4. Allow time for the source changes to reach MDM and appear in the API results. Refresh or reopen the dashboard view and confirm the same customer's updated information.
 
 ## Dashboard Features
 
