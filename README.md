@@ -70,13 +70,18 @@ For source database and TapData pipeline setup, follow the [BankStream Feeder RE
 6. **Run tests and start the dashboard.** If you chose `demo`, no TapData credentials are needed. If you chose `tapdata`, first set these four values in `.env`:
 
    ```ini
+   # Partners using TapData-hosted databases and the TapData Console UI to publish APIs:
+   # Use public IP 113.98.206.139 as the host in both URLs below. Use the ports provided by TapData and keep the URL paths unchanged.
+ 
+ 
+   # Partners using their own database and TapData environment: use your own TapData host IP and ports in both URLs.
    TAPDATA_API_BASE_URL=http://127.0.0.1:3080
    TAPDATA_TOKEN_URL=http://127.0.0.1:3030/oauth/token
    TAPDATA_CLIENT_ID=YOUR_TAPDATA_CLIENT_ID
    TAPDATA_CLIENT_SECRET=YOUR_TAPDATA_CLIENT_SECRET
    ```
 
-   Use your real client ID and secret. Change the URLs if TapData runs on another computer or different ports. Keep the other TapData settings from `.env.example` for the reference setup. These same values connect the live dashboard to TapData. Keep `.env` and real credentials out of Git.
+   Use your real client ID and secret. Change the URLs if TapData runs on another computer or different ports. Keep the other TapData settings from `.env.example` for the reference setup. These same values connect tVhe live dashboard to TapData. Keep `.env` and real credentials out of Git.
 
    From the dashboard folder, run:
 
