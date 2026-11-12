@@ -104,7 +104,7 @@ For source database and TapData pipeline setup, follow the [BankStream Feeder RE
 
 For a UI preview without live integration, set `DATA_SOURCE=demo`. Sample data does not demonstrate CDC.
 
-**Optional LAN access:** Set `HOST=0.0.0.0` and the desired `PORT` in `.env`, restart, and use the LAN URL shown by service status from another computer. The default `HOST=127.0.0.1` allows access only on the host. `0.0.0.0` is a listening address, not a browser URL. Your host firewall and network must permit the connection; the application does not configure them. Production requires the existing trusted identity proxy and network controls.
+**Optional LAN access:** Set `HOST=0.0.0.0` and the desired `PORT` in `.env`, restart, and use the LAN URL shown by service status from another computer. The `HOST=127.0.0.1` allows access only on the host. `0.0.0.0` is a listening address, not a browser URL. Your host firewall and network must permit the connection; the application does not configure them. Production requires the existing trusted identity proxy and network controls.
 
 ## Live CDC Demonstration
 
